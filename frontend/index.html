@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phishing Email Detection & Awareness Dashboard | Defensive Security Engine</title>
+  <meta name="description" content="Industry-oriented cybersecurity defensive dashboard for analyzing synthetic email content, sender patterns, URLs, attachments, and social engineering indicators.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for SOC Visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <a href="#" class="brand">
+      <div class="brand-icon">
+        <i data-lucide="shield-alert"></i>
+      </div>
+      <div class="brand-text">
+        <h1>DEFENDER PHISHGUARD</h1>
+        <span>Cybersecurity Triage & Awareness Platform</span>
+      </div>
+    </a>
+
+    <!-- Nav Tabs -->
+    <nav class="nav-links">
+      <button class="nav-tab active" data-tab="tab-analyzer" id="btn-tab-analyzer">
+        <i data-lucide="scan-search" style="width:16px;height:16px;"></i>
+        Email Analyzer
+      </button>
+      <button class="nav-tab" data-tab="tab-dashboard" id="btn-tab-dashboard">
+        <i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i>
+        SOC Analytics
+      </button>
+      <button class="nav-tab" data-tab="tab-url-sandbox" id="btn-tab-sandbox">
+        <i data-lucide="link-2" style="width:16px;height:16px;"></i>
+        URL Sandbox
+      </button>
+      <button class="nav-tab" data-tab="tab-history" id="btn-tab-history">
+        <i data-lucide="history" style="width:16px;height:16px;"></i>
+        Audit Log
+      </button>
+      <button class="nav-tab" data-tab="tab-awareness" id="btn-tab-awareness">
+        <i data-lucide="graduation-cap" style="width:16px;height:16px;"></i>
+        Awareness Lab
+      </button>
+    </nav>
+
+    <!-- Operational State -->
+    <div class="nav-badge">
+      <span class="pulse-dot"></span>
+      <span>SOC ENGINE: READY</span>
+    </div>
+  </header>
+
+  <!-- Main Application Wrapper -->
+  <main class="main-wrapper">
+
+    <!-- Top Statistical Summary Cards -->
+    <section class="stats-grid" id="top-stats-container">
+      <div class="stat-card glass">
+        <div class="stat-header">
+          <span class="stat-label">Total Analyzed</span>
+          <div class="stat-icon" style="background: rgba(0, 242, 254, 0.1); color: var(--cyan-primary);">
+            <i data-lucide="mail-search"></i>
+          </div>
+        </div>
+        <div class="stat-val" id="stat-total-analyzed">0</div>
+        <div class="stat-desc">Emails audited in database</div>
+      </div>
+
+      <div class="stat-card glass">
+        <div class="stat-header">
+          <span class="stat-label">Likely Phishing</span>
+          <div class="stat-icon" style="background: var(--color-danger-bg); color: var(--color-danger);">
+            <i data-lucide="shield-x"></i>
+          </div>
+        </div>
+        <div class="stat-val" id="stat-high-risk" style="color: var(--color-danger);">0</div>
+        <div class="stat-desc">High confidence attacks mitigated</div>
+      </div>
+
+      <div class="stat-card glass">
+        <div class="stat-header">
+          <span class="stat-label">Suspicious Items</span>
+          <div class="stat-icon" style="background: var(--color-warning-bg); color: var(--color-warning);">
+            <i data-lucide="alert-triangle"></i>
+          </div>
+        </div>
+        <div class="stat-val" id="stat-suspicious" style="color: var(--color-warning);">0</div>
+        <div class="stat-desc">Requiring analyst verification</div>
+      </div>
+
+      <div class="stat-card glass">
+        <div class="stat-header">
+          <span class="stat-label">Safe Communications</span>
+          <div class="stat-icon" style="background: var(--color-safe-bg); color: var(--color-safe);">
+            <i data-lucide="shield-check"></i>
+          </div>
+        </div>
+        <div class="stat-val" id="stat-safe" style="color: var(--color-safe);">0</div>
+        <div class="stat-desc">Clean baseline communications</div>
+      </div>
+
+      <div class="stat-card glass">
+        <div class="stat-header">
+          <span class="stat-label">Average Risk</span>
+          <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: var(--purple-accent);">
+            <i data-lucide="gauge"></i>
+          </div>
+        </div>
+        <div class="stat-val" id="stat-avg-score">0.0</div>
+        <div class="stat-desc">Out of 100 maximum risk</div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         TAB 1: LIVE EMAIL ANALYZER
+         ==================================================================== -->
+    <div id="tab-analyzer" class="tab-content active">
+      <div class="analyzer-grid">
+
+        <!-- Left Form Panel -->
+        <div class="form-panel glass">
+          <div class="panel-header">
+            <div class="panel-title">
+              <i data-lucide="shield" style="color:var(--cyan-primary)"></i>
+              <span>Email Triage Inspector</span>
+            </div>
+            
+            <!-- Quick Sample Loader -->
+            <div>
+              <select id="sample-selector" class="form-control sample-select">
+                <option value="">⚡ Load Safe Demonstration Sample...</option>
+                <!-- Filled via JS from /api/samples -->
+              </select>
+            </div>
+          </div>
+
+          <form id="email-analysis-form">
+            <!-- Sender Input -->
+            <div class="form-group">
+              <label class="form-label" for="input-sender">
+                <span>Sender ('From' Header)</span>
+                <span class="hint">e.g. IT Support &lt;helpdesk@invalid.test&gt;</span>
+              </label>
+              <input type="text" id="input-sender" class="form-control" placeholder="Display Name &lt;user@domain.com&gt;" required>
+            </div>
+
+            <!-- Subject Line -->
+            <div class="form-group">
+              <label class="form-label" for="input-subject">
+                <span>Email Subject</span>
+                <span class="hint">Subject line telemetry</span>
+              </label>
+              <input type="text" id="input-subject" class="form-control" placeholder="e.g. URGENT: Verify Your Account Immediately">
+            </div>
+
+            <!-- Email Body Content -->
+            <div class="form-group">
+              <label class="form-label" for="input-body">
+                <span>Email Body Content</span>
+                <span class="hint">Full plain text body with hyperlinks</span>
+              </label>
+              <textarea id="input-body" class="form-control" rows="8" placeholder="Paste the complete email content here for multi-vector threat extraction..." required></textarea>
+            </div>
+
+            <!-- Attachment Filename (Optional) -->
+            <div class="form-group">
+              <label class="form-label" for="input-attachment">
+                <span>Attachment Filename (Static Inspection Only)</span>
+                <span class="hint">e.g. invoice.pdf.exe, statement.scr</span>
+              </label>
+              <input type="text" id="input-attachment" class="form-control" placeholder="Optional filename to evaluate extension risk">
+            </div>
+
+            <!-- Explicit URLs (Optional override) -->
+            <div class="form-group">
+              <label class="form-label" for="input-urls">
+                <span>Custom Target URLs (Optional override)</span>
+                <span class="hint">Auto-extracted from body if left blank</span>
+              </label>
+              <input type="text" id="input-urls" class="form-control" placeholder="http://198.51.100.10/verify-account">
+            </div>
+
+            <!-- Controls Row: EML upload & Hybrid Toggle -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 1rem 0; flex-wrap:wrap; gap:0.75rem;">
+              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; cursor:pointer;">
+                <input type="checkbox" id="check-hybrid" checked style="accent-color:var(--cyan-primary); width:16px; height:16px;">
+                <span>Enable Hybrid AI (Rule Heuristics + NLP Model)</span>
+              </label>
+
+              <!-- Upload .eml file trigger -->
+              <div>
+                <input type="file" id="file-upload-input" accept=".eml,.txt" style="display:none;">
+                <button type="button" class="btn-secondary" id="btn-trigger-upload" style="padding:0.45rem 0.85rem; font-size:0.78rem;">
+                  <i data-lucide="upload" style="width:14px;height:14px; display:inline-block; vertical-align:middle;"></i>
+                  Upload .EML / .TXT
+                </button>
+              </div>
+            </div>
+
+            <!-- Submit Button Row -->
+            <div class="action-row">
+              <button type="submit" class="btn-primary" id="btn-submit-analyze">
+                <i data-lucide="scan" style="width:18px;height:18px;"></i>
+                <span id="btn-submit-text">ANALYZE EMAIL</span>
+              </button>
+              <button type="button" class="btn-secondary" id="btn-reset-form">
+                <i data-lucide="rotate-ccw" style="width:16px;height:16px;"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right Results Panel -->
+        <div class="results-panel glass" id="results-display-area">
+          <div class="empty-state" id="empty-state-view">
+            <i data-lucide="shield-alert"></i>
+            <h3>Awaiting Forensic Input</h3>
+            <p>Paste an email or select a safe sample on the left, then click <strong>Analyze Email</strong> to perform defensive threat analysis.</p>
+          </div>
+
+          <!-- Dynamic Result Container (Hidden until analysis runs) -->
+          <div id="active-result-view" style="display:none;">
+            <!-- Threat Gauge & Classification -->
+            <div class="threat-gauge-box" id="gauge-box">
+              <div class="score-circle" id="score-circle-elem">
+                <div class="score-num" id="res-score-num">0</div>
+                <div class="score-max">/ 100</div>
+              </div>
+              <div class="threat-info">
+                <span class="threat-badge" id="res-threat-badge">SAFE</span>
+                <h3 id="res-threat-title">Threat Assessment Complete</h3>
+                <p id="res-threat-summary">Classification generated via multi-vector heuristics.</p>
+              </div>
+            </div>
+
+            <!-- Score Decomposition Mini Bar -->
+            <div class="score-breakdown-bar">
+              <div><i data-lucide="cpu" style="width:14px;height:14px;color:var(--cyan-primary);"></i> Rule Engine: <strong id="res-rule-score">0</strong>/100</div>
+              <div><i data-lucide="brain-circuit" style="width:14px;height:14px;color:var(--purple-accent);"></i> ML Model: <strong id="res-ml-prob">0</strong>%</div>
+              <div id="res-analysis-id-tag" style="margin-left:auto; color:var(--text-dim);">ID: ANL-0000</div>
+            </div>
+
+            <!-- MITRE ATT&CK Pills -->
+            <div class="section-subtitle">
+              <i data-lucide="target" style="width:14px;height:14px;"></i>
+              <span>MITRE ATT&CK Framework Mapping</span>
+            </div>
+            <div class="mitre-container" id="res-mitre-container">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Why Is This Suspicious? Explainable Indicators -->
+            <div class="section-subtitle">
+              <i data-lucide="alert-circle" style="width:14px;height:14px;"></i>
+              <span>Forensic Findings & Social Engineering Indicators</span>
+            </div>
+            <div class="indicator-list" id="res-indicator-list">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Hyperlink Telemetry -->
+            <div class="section-subtitle">
+              <i data-lucide="link" style="width:14px;height:14px;"></i>
+              <span>URL Inspection Breakdown</span>
+            </div>
+            <div id="res-url-list" style="margin-bottom:1rem;">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Recommended Defensive Action Checklist -->
+            <div class="section-subtitle">
+              <i data-lucide="check-square" style="width:14px;height:14px;"></i>
+              <span>Recommended Security Operations (SOC) Action</span>
+            </div>
+            <ul class="rec-list" id="res-rec-list">
+              <!-- Rendered via JS -->
+            </ul>
+
+            <!-- Report Copy Button -->
+            <div style="margin-top:1.5rem; text-align:right;">
+              <button class="btn-secondary" id="btn-copy-report" style="font-size:0.8rem;">
+                <i data-lucide="copy" style="width:14px;height:14px; display:inline-block; vertical-align:middle;"></i>
+                Copy Triage Summary Report
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         TAB 2: SOC ANALYTICS DASHBOARD
+         ==================================================================== -->
+    <div id="tab-dashboard" class="tab-content">
+      <div class="charts-grid">
+        <!-- Chart 1: Classification Distribution -->
+        <div class="chart-card glass">
+          <h4><i data-lucide="pie-chart" style="color:var(--cyan-primary);"></i> Classification Tier Distribution</h4>
+          <div class="chart-container">
+            <canvas id="chart-classification"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Top Phishing Indicators -->
+        <div class="chart-card glass">
+          <h4><i data-lucide="bar-chart-2" style="color:var(--blue-accent);"></i> Most Frequent Threat Indicators</h4>
+          <div class="chart-container">
+            <canvas id="chart-indicators"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 3: Risk Score Distribution Histogram -->
+        <div class="chart-card glass">
+          <h4><i data-lucide="activity" style="color:var(--purple-accent);"></i> Risk Score Distribution Spectrum</h4>
+          <div class="chart-container">
+            <canvas id="chart-scores"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 4: Machine Learning Model Performance Card -->
+        <div class="chart-card glass">
+          <h4><i data-lucide="award" style="color:var(--color-safe);"></i> ML Classifier Performance Matrix</h4>
+          <div id="ml-metrics-display" style="padding:1rem 0; font-size:0.85rem;">
+            <p style="color:var(--text-muted); margin-bottom:1rem;">
+              Candidate models trained on the safe synthetic dataset using sublinear TF-IDF vectorization:
+            </p>
+            <table class="custom-table" style="font-size:0.8rem;">
+              <thead>
+                <tr>
+                  <th>Model Algorithm</th>
+                  <th>Accuracy</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1 Score</th>
+                </tr>
+              </thead>
+              <tbody id="ml-models-table-body">
+                <!-- Filled via JS -->
+              </tbody>
+            </table>
+            <div style="margin-top:1.25rem; font-size:0.78rem; color:var(--text-dim); line-height:1.5;">
+              <strong style="color:var(--color-warning);">SOC Note:</strong> Recall is prioritized in email security to minimize False Negatives (undetected phishing), while high precision prevents analyst alert fatigue.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         TAB 3: URL DEEP-SCAN SANDBOX (STATIC)
+         ==================================================================== -->
+    <div id="tab-url-sandbox" class="tab-content">
+      <div class="form-panel glass" style="max-width:850px; margin:0 auto 2rem;">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i data-lucide="shield-check" style="color:var(--cyan-primary);"></i>
+            <span>Offline Static URL Inspector</span>
+          </div>
+          <span style="font-size:0.75rem; color:var(--text-dim); font-family:var(--font-mono);">SAFE LEXICAL PARSER (0 HTTP CALLS)</span>
+        </div>
+        <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:1.25rem;">
+          Inspect suspicious links safely without initiating network requests. The analyzer performs lexical decomposition, raw IP checks, shortener detection, and authentication keyword scanning.
+        </p>
+
+        <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem;">
+          <input type="text" id="sandbox-url-input" class="form-control" placeholder="e.g. http://198.51.100.10/verify-account?token=8942" value="http://198.51.100.10/verify-account">
+          <button class="btn-primary" id="btn-sandbox-inspect" style="flex:0 0 auto; width:160px;">
+            <i data-lucide="search" style="width:16px;height:16px;"></i>
+            Inspect Link
+          </button>
+        </div>
+
+        <!-- Sandbox Output Display -->
+        <div id="sandbox-result-box" style="display:none;">
+          <div class="threat-gauge-box" id="sandbox-gauge-box" style="margin-bottom:1.25rem;">
+            <div class="score-circle" id="sandbox-circle">
+              <div class="score-num" id="sandbox-score-num">0</div>
+              <div class="score-max">/ 100</div>
+            </div>
+            <div class="threat-info">
+              <span class="threat-badge" id="sandbox-badge">URL RISK</span>
+              <h3 id="sandbox-host-title">Host Analysis</h3>
+              <p id="sandbox-scheme-desc">Scheme and host metrics.</p>
+            </div>
+          </div>
+
+          <div class="section-subtitle">
+            <i data-lucide="list-checks" style="width:14px;height:14px;"></i>
+            <span>Static Lexical Breakdown</span>
+          </div>
+          <table class="custom-table" style="margin-bottom:1.25rem;">
+            <tbody id="sandbox-metrics-table">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+
+          <div class="section-subtitle">
+            <i data-lucide="alert-octagon" style="width:14px;height:14px;"></i>
+            <span>Observed URL Risk Markers</span>
+          </div>
+          <div class="indicator-list" id="sandbox-findings-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         TAB 4: ANALYSIS AUDIT HISTORY
+         ==================================================================== -->
+    <div id="tab-history" class="tab-content">
+      <div class="table-panel glass">
+        <div class="table-controls">
+          <div class="search-box">
+            <i data-lucide="search" style="width:16px;height:16px;color:var(--text-dim);"></i>
+            <input type="text" id="history-search-input" placeholder="Search by subject, domain, or sender...">
+          </div>
+
+          <div style="display:flex; gap:0.75rem; align-items:center;">
+            <label style="font-size:0.8rem; color:var(--text-muted);">Classification:</label>
+            <select id="history-filter-class" class="form-control" style="width:180px; padding:0.45rem;">
+              <option value="ALL">All Categories</option>
+              <option value="HIGH RISK / LIKELY PHISHING">High Risk / Phishing</option>
+              <option value="SUSPICIOUS">Suspicious</option>
+              <option value="LOW RISK">Low Risk</option>
+              <option value="SAFE">Safe</option>
+            </select>
+            <button class="btn-secondary" id="btn-refresh-history" style="padding:0.45rem 0.85rem;">
+              <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Audit ID</th>
+                <th>Sender Domain</th>
+                <th>Subject Telemetry</th>
+                <th>Risk Score</th>
+                <th>Classification</th>
+                <th>Timestamp</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <!-- Rendered dynamically via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         TAB 5: PHISHING AWARENESS & TRAINING LAB
+         ==================================================================== -->
+    <div id="tab-awareness" class="tab-content">
+      
+      <!-- Educational Core Guide -->
+      <div class="awareness-grid">
+        <div class="awareness-card glass">
+          <h3><i data-lucide="eye"></i> 10 Red Flags: How to Spot Phishing</h3>
+          <ol class="spotting-list">
+            <li><strong>Sender Domain Mismatch:</strong> Display name claims to be a brand, but the actual domain address differs (e.g. PayPal Support from invalid.test).</li>
+            <li><strong>Artificial Urgency:</strong> Demands immediate action within 12 or 24 hours to create panic and bypass rational review.</li>
+            <li><strong>Deceptive Hyperlinks:</strong> Hovering reveals numerical raw IPs (198.51.100.10) or URL shorteners hiding destination servers.</li>
+            <li><strong>Direct Credential Requests:</strong> Demands passwords, PINs, or MFA keys via unsecured external forms.</li>
+            <li><strong>Weaponized Double Extensions:</strong> Disguised executables such as <code>Invoice.pdf.exe</code> or <code>Statement.scr</code>.</li>
+            <li><strong>Depersonalized Greetings:</strong> Uses generic openers like "Dear Customer" or "Attention Staff" instead of personalized names.</li>
+            <li><strong>Financial Coercion:</strong> Claims overdue payments, threatening collections agencies or legal penalties.</li>
+            <li><strong>Unexpected Wealth or Prizes:</strong> Claims you won lotteries, sweepstakes, or cryptocurrency giveaways you never entered.</li>
+            <li><strong>Unusual Grammar or Casing:</strong> ALL-CAPS screaming subjects, multiple exclamation marks, or unnatural phrasing.</li>
+            <li><strong>Contextual Mismatch:</strong> Inquiries about systems or vendors your department does not use.</li>
+          </ol>
+        </div>
+
+        <div class="awareness-card glass">
+          <h3><i data-lucide="clipboard-check"></i> "Before You Click" Defensive Checklist</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1rem;">
+            Follow this interactive 7-step checklist before opening attachments or clicking links:
+          </p>
+          <div class="checklist">
+            <label class="check-item">
+              <input type="checkbox">
+              <span>Did I verify the sender's actual email address, not just the display name?</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox">
+              <span>Was I expecting this specific email, attachment, or payment request?</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox">
+              <span>Did I inspect the destination URL without clicking it?</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox">
+              <span>Does the URL point to the organization's official, bookmarked domain?</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox">
+              <span>Is the message pressuring me to bypass standard verification channels?</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox">
+              <span>Does the attachment end with an executable or script extension (.exe, .scr, .vbs)?</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox">
+              <span>Have I confirmed the request out-of-band via phone or official internal chat?</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Scenario Trainer / Quiz -->
+      <div class="quiz-panel glass">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="panel-title">
+            <i data-lucide="help-circle" style="color:var(--cyan-primary);"></i>
+            <span>Interactive Security Awareness Scenario Challenge</span>
+          </div>
+          <span class="nav-badge" id="quiz-score-badge">SCORE: 0 / 0</span>
+        </div>
+        <p style="font-size:0.84rem; color:var(--text-muted); margin:0.5rem 0 1rem;">
+          Test your defensive reflexes! Inspect the simulated communication below. Is it a legitimate email or a phishing lure?
+        </p>
+
+        <!-- Simulated Email Card -->
+        <div class="quiz-email-preview" id="quiz-email-card">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="quiz-buttons">
+          <button class="btn-quiz-phish" id="btn-quiz-phish">
+            <i data-lucide="shield-alert" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>
+            Flag as Phishing Attack
+          </button>
+          <button class="btn-quiz-legit" id="btn-quiz-legit">
+            <i data-lucide="check-circle-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>
+            Mark as Legitimate Communication
+          </button>
+          <button class="btn-secondary" id="btn-quiz-next" style="margin-left:auto; display:none;">
+            Next Challenge →
+          </button>
+        </div>
+
+        <div id="quiz-feedback-box" style="margin-top:1.25rem; font-size:0.85rem; display:none; padding:1rem; border-radius:var(--radius-sm);">
+          <!-- Feedback rendered via JS -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Modal for Historical Record Detail -->
+  <div class="modal-overlay" id="history-detail-modal">
+    <div class="modal-card glass">
+      <button class="close-modal" id="btn-close-modal">&times;</button>
+      <div id="modal-content-area">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Logic -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
