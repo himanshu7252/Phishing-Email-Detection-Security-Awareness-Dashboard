@@ -1,0 +1,43 @@
+{
+    "best_model": "Logistic Regression",
+    "models_evaluated": {
+        "Logistic Regression": {
+            "accuracy": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "confusion_matrix": {
+                "true_negative": 60,
+                "false_positive": 0,
+                "false_negative": 0,
+                "true_positive": 60
+            }
+        },
+        "Multinomial Naive Bayes": {
+            "accuracy": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "confusion_matrix": {
+                "true_negative": 60,
+                "false_positive": 0,
+                "false_negative": 0,
+                "true_positive": 60
+            }
+        },
+        "Random Forest": {
+            "accuracy": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "confusion_matrix": {
+                "true_negative": 60,
+                "false_positive": 0,
+                "false_negative": 0,
+                "true_positive": 60
+            }
+        }
+    },
+    "test_sample_count": 120,
+    "feature_count": 2459
+}
